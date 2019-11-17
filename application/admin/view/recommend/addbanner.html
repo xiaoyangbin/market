@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>添加轮播图</title>
+    <script type="text/javascript" src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="__STATIC____ADMIN__/css/font.css">
+    <link rel="stylesheet" href="__STATIC____ADMIN__/css/xadmin.css">
+    <!-- <link rel="stylesheet" href="./css/theme5.css"> -->
+    <script src="__STATIC____ADMIN__/lib/layui/layui.js" charset="utf-8"></script>
+    <script type="text/javascript" src="__STATIC____ADMIN__/js/xadmin.js"></script>
+    <script type="text/javascript" src="__STATIC____ADMIN__/js/layer.js"></script>
+</head>
+<style>
+    .layui-upload-img {
+        width: 90px;
+        height: 90px;
+        margin: 0;
+    }
+
+    .pic-more {
+        width: 100%;
+        left: 0;
+        margin: 20px 0px 0px 0px;
+    }
+
+    .pic-more li {
+        width: 150px;
+        float: left;
+        margin-right: 5px;
+    }
+
+    .pic-more li .layui-input {
+        display: initial;
+    }
+
+    .pic-more li a {
+        position: absolute;
+        top: 0;
+        display: block;
+    }
+
+    .pic-more li a i {
+        font-size: 24px;
+        background-color: #008800;
+    }
+
+    #slide-pc-priview .item_img img {
+        width: 150px;
+        height: 150px;
+    }
+
+    #slide-pc-priview li {
+        position: relative;
+    }
+
+    #slide-pc-priview li .operate {
+        color: #000;
+        display: none;
+    }
+
+    #slide-pc-priview li .toleft {
+        position: absolute;
+        top: 75px;
+        left: 5px;
+        cursor: pointer;
+    }
+
+    #slide-pc-priview li .toright {
+        position: absolute;
+        top: 75px;
+        right: 5px;
+        cursor: pointer;
+    }
+
+    #slide-pc-priview li .close {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        cursor: pointer;
+    }
+
+    #slide-pc-priview li:hover .operate {
+        display: block;
+    }
+</style>
+
+<body>
+    <form class="layui-form" id="addbanner">
+        <!-- 多图上传 -->
+        <div class="layui-form-item" id="pics" style="margin-top: 20px;">
+            <div class="layui-form-label">轮播图</div>
+            <div class="layui-input-block" style="width: 70%;">
+                <div class="layui-upload">
+                    <button type="button" class="layui-btn layui-btn-primary pull-left" id="slide-pc">上传图片</button>
+                    <div class="pic-more">
+                        <ul class="pic-more-upload-list" id="slide-pc-priview">
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--  -->
+        <div class="layui-form-item">
+            <label for="order" class="layui-form-label">
+                <span class="x-red">*</span>排序
+            </label>
+            <div class="layui-input-inline">
+                <input type="text" id="order" name="order" required="" lay-verify="required" autocomplete="off"
+                    class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label for="L_repass" class="layui-form-label">
+            </label>
+            <button class="layui-btn" lay-filter="add" lay-submit="" id="add" type="button">
+                添加商品
+            </button>
+            <button class="layui-btn" lay-filter="add" lay-submit="" id="quxiao">
+                取消添加
+            </button>
+        </div>
+    </form>
+    <script>
+
+        layui.use('form', function () {
+            var form = layui.form;
+        });
+
+        layui.use('upload', function () {
+            var $ = layui.jquery;
+            var upload = layui.upload;
+            upload.render({
+                elem: '#slide-pc',
+                url: "{:url('admin/Commodity/img')}",
+                size: 500,
+                exts: 'jpg|png|jpeg',
+                multiple: true,
+                before: function (obj) {
+                    layer.msg('图片上传中...', {
+                        icon: 16,
+                        shade: 0.01,
+                        time: 0
+                    })
+                },
+                done: function (res) {
+                    console.log(res);
+                    layer.close(layer.msg());//关闭上传提示窗口
+                    if (res.status == 0) {
+                        return layer.msg(res.message);
+                    }
+                    $('#slide-pc-priview').append('<li class="item_img" data-text="' + res.info + '"><div class="operate"><i  class="close layui-icon"><img style="height: 32px;width: 32px;" src="__STATIC____ADMIN__/images/quxiao.png"></i></div><img src="__IMGURL__' + res.info + '" class="img" ><input type="hidden" name="url" value="' + res.info + '" /></li>');
+                    $('#slide-pc').hide();
+                }
+            });
+        });
+
+        //点击多图上传的X,删除当前的图片    
+        $("body").on("click", ".close", function () {
+            $(this).closest("li").remove();//删除被选元素（及其子元素）
+            var pimg = $(this).closest("li").data("text");//获取图片路径
+            console.log(pimg);
+            $.ajax({
+                type: 'post',
+                url: "{:url('admin/Commodity/deletepimg')}",
+                data: { 'pimg': pimg },
+                dataType: 'json',
+                success: function (res) {
+                    $('#slide-pc').show();
+                    console.log(res);
+                }
+            })
+        });
+
+        $(function () {
+            $('#add').on('click', function () {
+                //解决乱码
+                var data = decodeURIComponent($('#addbanner').serialize(), true);
+                console.log(data);
+                //用ajax提交用户信息  
+                $.ajax({
+                    type: 'post',
+                    url: "{:url('admin/Recommend/sevasbanner')}",
+                    data: data,
+                    dataType: 'json',
+                    success: function (res) {
+                        console.log(res);
+                        if (res.error_code == 400) {
+                            layer.open({
+                                type: 0,
+                                title: '警告',
+                                content: res.msg,
+                                anim: 6
+                            });
+                        }
+                        if (res == 1) {
+                            // 可以对父窗口进行刷新
+                            xadmin.father_reload();
+                            //关闭当前frame
+                            xadmin.close();
+                        }
+                    }
+                })
+            });
+
+            //取消修改
+            $('#quxiao').on('click', function () {
+                //关闭当前frame
+                xadmin.close();
+                // 可以对父窗口进行刷新 
+                xadmin.father_reload();
+            });
+        });
+    </script>
+</body>
+
+</html>

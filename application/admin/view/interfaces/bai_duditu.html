@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Hello, World</title>
+    <script type="text/javascript" src="__STATIC____ADMIN__/js/jquery-1.9.1.min.js"></script>
+    <script type="text/javascript" src="http://api.map.baidu.com/api?v=3.0&ak=DQ58A2Vt9ADKcBMqEGvF8jBwobkEtbf6"></script>
+    <style type="text/css">
+        html {
+            height: 100%
+        }
+        body {
+            height: 100%;
+            margin: 0px;
+            padding: 0px
+        }
+        #container {
+            height: 90%
+        }
+        .dizhi{margin-left: 10%;}
+    </style>
+</head>
+
+<body>
+    <div class="dizhi">
+        <p>输入地址：<input type="text" name="dizhi"><input type="submit" value="查询" id="chaxun"></p>
+    </div>
+    <div id="container"></div>
+    <script type="text/javascript">
+    var city = '太平镇';//搜索的地方
+    var lng = '110.36555441392824';//纬度值
+    var lat = '21.276723439012073';//经度值
+    var cityleven = '9'; //城市等级
+         $(function () {
+        $('#chaxun').on('click', function () {
+            //解决乱码
+            var dizhi = decodeURIComponent($(" input[ name='dizhi' ] ").val(), true);
+            //用ajax提交用户信息  
+            $.ajax({
+                type: 'post',
+                url: "{:url('admin/Interfaces/ditucallback')}",
+                data: {"dizhi":dizhi},
+                dataType: 'json',
+                success: function (res) {
+                    console.log(res);
+                    var city = res.name;
+                    var lng = res.lng;
+                    var lat = res.lat;
+                    //中国 5 //省8 //市9 //区 10 //"乡镇" 13
+                    if(res.level=="国家"){
+                        cityleven=5;
+                    }else if(res.level=="省"){
+                        cityleven=8;
+                    }else if(res.level=="城市"){
+                        cityleven=9;
+                    }else if(res.level=="区县"){
+                        cityleven=13;
+                    }else if(res.level=="乡镇"){
+                        cityleven=14;
+                    }else{
+                        cityleven=17;
+                    }
+                    var map = new BMap.Map("container");// 创建地图实例  
+                    var point = new BMap.Point(lng, lat);// 创建点坐标  
+                    map.centerAndZoom(city,cityleven);// 初始化地图，设置中心点坐标和地图级别  
+                    var marker = new BMap.Marker(point);        // 创建标注    
+                    map.addOverlay(marker);                     // 将标注添加到地图中 
+                    map.enableScrollWheelZoom(true);     //开启鼠标滚轮缩放
+                    map.addControl(new BMap.NavigationControl());//平移缩放控件
+                    map.addControl(new BMap.ScaleControl());//比例尺控件    
+                    map.addControl(new BMap.OverviewMapControl());//缩略图控件
+                    map.addControl(new BMap.MapTypeControl());//地图、卫星、三维控件
+                }
+            })
+        });
+        
+        
+    });
+        
+    </script>
+</body>
+
+</html>
